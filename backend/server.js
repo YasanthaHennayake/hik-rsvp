@@ -39,6 +39,13 @@ app.get('/api/debug-page', async (req, res) => {
     // On Heroku, use Chrome from buildpack
     if (process.env.GOOGLE_CHROME_BIN) {
       launchOptions.executablePath = process.env.GOOGLE_CHROME_BIN;
+    } else {
+      // Try the chrome-for-testing path
+      const fs = require('fs');
+      const chromePath = '/app/.chrome-for-testing/chrome-linux64/chrome';
+      if (fs.existsSync(chromePath)) {
+        launchOptions.executablePath = chromePath;
+      }
     }
 
     browser = await puppeteer.launch(launchOptions);

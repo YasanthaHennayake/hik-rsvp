@@ -25,7 +25,7 @@ app.get('/api/health', (req, res) => {
 
 // Debug endpoint - Get page screenshot
 app.get('/api/debug-page', async (req, res) => {
-  const puppeteer = require('puppeteer');
+  const puppeteer = require('puppeteer-core');
   let browser;
 
   try {

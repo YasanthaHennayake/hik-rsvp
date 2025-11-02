@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hikvision Event RSVP - November 7-8, 2025</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Cosmic Animated Background -->
+    <div class="cosmos-bg" id="cosmos-bg">
+        <canvas id="stars-canvas"></canvas>
+        <div class="galaxy galaxy1"></div>
+        <div class="galaxy galaxy2"></div>
+        <div class="galaxy galaxy3"></div>
+        <div class="nebula nebula1"></div>
+        <div class="nebula nebula2"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="event-header">
+        <div class="header-content">
+            <div class="logos-container">
+                <img src="hikvision.png" alt="Hikvision" class="logo-hikvision">
+                <img src="itg.png" alt="IT Gallery" class="logo-itg">
+            </div>
+            <h2 class="event-title">Partner Summit 2025</h2>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="header">
+            <h1>Event Registration</h1>
+            <p class="subtitle">November 7th 6:00 PM Onwards At Monarch Imperial</p>
+            <p class="event-info">Please complete your registration below</p>
+        </div>
+
+        <!-- Step 1: User Information -->
+        <form id="rsvp-form" class="rsvp-form" style="display: block;">
+            <!-- Photo Upload -->
+            <div class="form-group">
+                <label for="photo">Attendee Photo <span class="required">*</span></label>
+                <p class="photo-guidelines">Please upload a clear front-facing photo of your face</p>
+                <div class="photo-upload-container">
+                    <div class="photo-preview" id="photo-preview">
+                        <svg class="photo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                        <p>Upload Photo</p>
+                    </div>
+                    <input
+                        type="file"
+                        id="photo"
+                        name="photo"
+                        accept="image/*"
+                        capture="user"
+                        style="display: none;"
+                        required
+                    >
+                    <div class="photo-buttons">
+                        <button type="button" class="photo-btn" id="upload-photo-btn">
+                            Choose Photo
+                        </button>
+                        <button type="button" class="photo-btn camera-btn" id="camera-photo-btn">
+                            Take Photo
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Name Fields -->
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="firstName">First Name <span class="required">*</span></label>
+                    <input
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        placeholder="First name"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="lastName">Last Name <span class="required">*</span></label>
+                    <input
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        placeholder="Last name"
+                        required
+                    >
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="form-group">
+                <label for="phone">Phone Number <span class="required">*</span></label>
+                <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    placeholder="+94 XX XXX XXXX"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address <span class="required">*</span></label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="your.email@example.com"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="organization">Organization <span class="required">*</span></label>
+                <input
+                    type="text"
+                    id="organization"
+                    name="organization"
+                    placeholder="Your organization name"
+                    required
+                >
+            </div>
+
+            <button type="submit" class="submit-btn" id="submit-btn">
+                <span class="btn-text">Continue</span>
+                <span class="btn-loader" style="display: none;"></span>
+            </button>
+        </form>
+
+        <!-- Step 2: Captcha Verification -->
+        <div id="captcha-section" class="captcha-section" style="display: none;">
+            <h3>Complete Security Verification</h3>
+            <p class="captcha-instruction">Please solve the puzzle below to complete your registration</p>
+
+            <div class="captcha-container">
+                <img id="captcha-image" src="" alt="Captcha puzzle">
+            </div>
+
+            <button type="button" class="refresh-captcha-btn" id="refresh-captcha-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="refresh-icon">
+                    <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                Refresh Captcha
+            </button>
+
+            <div class="form-group">
+                <label for="captcha-answer">Enter the answer to the puzzle <span class="required">*</span></label>
+                <input
+                    type="text"
+                    id="captcha-answer"
+                    name="captcha-answer"
+                    placeholder="Your answer"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="submit-btn secondary-btn" id="back-btn">
+                    Back
+                </button>
+                <button type="button" class="submit-btn" id="final-submit-btn">
+                    <span class="btn-text">Submit RSVP</span>
+                    <span class="btn-loader" style="display: none;"></span>
+                </button>
+            </div>
+        </div>
+
+        <div id="message" class="message" style="display: none;"></div>
+
+        <!-- Success Section -->
+        <div id="success-section" class="success-section" style="display: none;">
+            <div class="success-icon">✓</div>
+            <h2>Registration Successful!</h2>
+            <p>Thank you for registering for the Hikvision IT Gallery Partner Summit 2025</p>
+            <div id="success-details"></div>
+            <button type="button" class="submit-btn" onclick="location.reload()">
+                Register Another Person
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Please wait a moment...</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="event-footer">
+        <div class="footer-content">
+            <h3 class="footer-tagline">INNOVATING BEYOND SECURITY <span class="year">2025</span></h3>
+            <img src="hikvision.png" alt="Hikvision" class="footer-logo">
+        </div>
+    </footer>
+
+    <script src="cosmos.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -14,7 +14,8 @@ async function initializeRSVP(formData) {
   try {
     console.log('Launching browser...');
 
-    browser = await puppeteer.launch({
+    // Use Chrome binary from buildpack on Heroku, otherwise use default
+    const launchOptions = {
       headless: 'new',
       args: [
         '--no-sandbox',
@@ -24,7 +25,14 @@ async function initializeRSVP(formData) {
         '--disable-web-security',
         '--disable-features=IsolateOrigins,site-per-process'
       ]
-    });
+    };
+
+    // On Heroku, use Chrome from buildpack
+    if (process.env.GOOGLE_CHROME_BIN) {
+      launchOptions.executablePath = process.env.GOOGLE_CHROME_BIN;
+    }
+
+    browser = await puppeteer.launch(launchOptions);
 
     page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36');

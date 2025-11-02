@@ -31,10 +31,17 @@ app.get('/api/debug-page', async (req, res) => {
   try {
     console.log('Debug: Opening RSVP page...');
 
-    browser = await puppeteer.launch({
+    const launchOptions = {
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    };
+
+    // On Heroku, use Chrome from buildpack
+    if (process.env.GOOGLE_CHROME_BIN) {
+      launchOptions.executablePath = process.env.GOOGLE_CHROME_BIN;
+    }
+
+    browser = await puppeteer.launch(launchOptions);
 
     const page = await browser.newPage();
     await page.goto('https://rsvp.hikvision.lk:8088/#/?nature=h5&app=Visitor&type=selfEntryVisitor&UserID=1', {

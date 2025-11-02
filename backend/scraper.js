@@ -23,7 +23,9 @@ async function initializeRSVP(formData) {
         '--disable-dev-shm-usage',
         '--disable-gpu',
         '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process'
+        '--disable-features=IsolateOrigins,site-per-process',
+        '--ignore-certificate-errors',
+        '--ignore-certificate-errors-spki-list'
       ]
     };
 
@@ -144,7 +146,7 @@ async function initializeRSVP(formData) {
     console.log('Visit purpose already set to Business (default)');
 
     // Date/time pickers are custom components that need clicking
-    // The dates shown are: Start: 2025/11/07 - 00:00, End: 2025/11/02 - 23:59
+    // The dates shown are: Start: 2025/11/07 - 18:30, End: 2025/11/08 - 23:59
     // Since these are custom pickers, we'll try to interact with them
     console.log('Setting visit dates...');
     await setVisitDates(page);
@@ -486,7 +488,7 @@ async function selectVisitPurpose(page, purpose) {
  */
 async function setVisitDates(page) {
   try {
-    console.log('Setting start date to Nov 7, 2025 00:00...');
+    console.log('Setting start date to Nov 7, 2025 18:30...');
 
     // Click start date to open picker
     await page.click('.datetime-start .date-time');
@@ -516,13 +518,17 @@ async function setVisitDates(page) {
               dayItems[5].click(); // 7 is at index 5 (starts from 2)
             }
 
-            // Hour wheel (index 3) - select 00
+            // Hour wheel (index 3) - select 18 (6 PM)
             const hourItems = wheels[3].querySelectorAll('.hm-picker-wheel-item');
-            hourItems[0].click(); // 00
+            if (hourItems.length >= 19) {
+              hourItems[18].click(); // 18 (6 PM)
+            }
 
-            // Minute wheel (index 4) - select 00
+            // Minute wheel (index 4) - select 30
             const minuteItems = wheels[4].querySelectorAll('.hm-picker-wheel-item');
-            hourItems[0].click(); // 00
+            if (minuteItems.length >= 31) {
+              minuteItems[30].click(); // 30
+            }
           }
         }
       }

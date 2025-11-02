@@ -13,7 +13,7 @@
 
     // Star particles
     const stars = [];
-    const numStars = 200;
+    const numStars = 500;
 
     // Shooting stars
     const shootingStars = [];
@@ -220,17 +220,48 @@
         const mouseYPercent = (e.clientY / window.innerHeight - 0.5) * 2;
 
         galaxies.forEach((galaxy, index) => {
-            const speed = (index + 1) * 10;
+            const speed = (index + 1) * 15;
+            const rotation = mouseXPercent * 30;
+            const scale = 1 + Math.abs(mouseXPercent) * 0.15;
             const x = mouseXPercent * speed;
             const y = mouseYPercent * speed;
-            galaxy.style.transform = `translate(${x}px, ${y}px) rotate(${mouseXPercent * 20}deg)`;
+            galaxy.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg) scale(${scale})`;
+            galaxy.style.opacity = 0.4 + Math.abs(mouseXPercent) * 0.2;
         });
 
         nebulas.forEach((nebula, index) => {
-            const speed = (index + 1) * 5;
+            const speed = (index + 1) * 8;
+            const scale = 1 + Math.abs(mouseYPercent) * 0.2;
             const x = mouseXPercent * speed;
             const y = mouseYPercent * speed;
-            nebula.style.transform = `translate(${x}px, ${y}px) scale(${1 + mouseXPercent * 0.1})`;
+            nebula.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${mouseYPercent * 10}deg)`;
+            nebula.style.opacity = 0.2 + Math.abs(mouseYPercent) * 0.15;
         });
+    });
+
+    // Touch support for mobile interactivity
+    document.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+            const touch = e.touches[0];
+            const mouseXPercent = (touch.clientX / window.innerWidth - 0.5) * 2;
+            const mouseYPercent = (touch.clientY / window.innerHeight - 0.5) * 2;
+
+            galaxies.forEach((galaxy, index) => {
+                const speed = (index + 1) * 15;
+                const rotation = mouseXPercent * 30;
+                const scale = 1 + Math.abs(mouseXPercent) * 0.15;
+                const x = mouseXPercent * speed;
+                const y = mouseYPercent * speed;
+                galaxy.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}deg) scale(${scale})`;
+            });
+
+            nebulas.forEach((nebula, index) => {
+                const speed = (index + 1) * 8;
+                const scale = 1 + Math.abs(mouseYPercent) * 0.2;
+                const x = mouseXPercent * speed;
+                const y = mouseYPercent * speed;
+                nebula.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${mouseYPercent * 10}deg)`;
+            });
+        }
     });
 })();

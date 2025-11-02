@@ -463,6 +463,5 @@ function resetForm() {
 
 // Initialize on page load
 window.addEventListener('load', () => {
-    console.log('Test mode loaded - Backend integration enabled');
-    showMessage('Visual test mode active. Make sure backend is running (npm start). Click "Load Dummy Photo" to begin.', 'info');
+    console.log('Application loaded - Backend integration enabled');
 });

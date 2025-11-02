@@ -33,7 +33,12 @@ app.get('/api/debug-page', async (req, res) => {
 
     const launchOptions = {
       headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--ignore-certificate-errors',
+        '--ignore-certificate-errors-spki-list'
+      ]
     };
 
     // On Heroku, use Chrome from buildpack

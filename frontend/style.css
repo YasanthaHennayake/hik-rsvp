@@ -62,7 +62,8 @@ body {
     border-radius: 50%;
     filter: blur(40px);
     opacity: 0.4;
-    animation: rotate 60s linear infinite;
+    animation: rotate 60s linear infinite, pulse 4s ease-in-out infinite;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
 
 .galaxy1 {
@@ -92,12 +93,31 @@ body {
     animation-delay: -40s;
 }
 
+.galaxy4 {
+    width: 350px;
+    height: 350px;
+    top: 30%;
+    right: 5%;
+    background: radial-gradient(circle, rgba(217, 70, 239, 0.35), transparent 70%);
+    animation-delay: -15s;
+}
+
+.galaxy5 {
+    width: 280px;
+    height: 280px;
+    bottom: 25%;
+    right: 25%;
+    background: radial-gradient(circle, rgba(147, 51, 234, 0.4), transparent 70%);
+    animation-delay: -30s;
+}
+
 /* Nebula Clouds */
 .nebula {
     position: absolute;
     filter: blur(60px);
     opacity: 0.2;
-    animation: drift 40s ease-in-out infinite;
+    animation: drift 40s ease-in-out infinite, pulse 6s ease-in-out infinite;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
 
 .nebula1 {
@@ -118,6 +138,16 @@ body {
     background: linear-gradient(-45deg, rgba(99, 102, 241, 0.3), var(--nebula-purple));
     border-radius: 60% 50% 40% 50%;
     animation-delay: -20s;
+}
+
+.nebula3 {
+    width: 450px;
+    height: 280px;
+    top: 40%;
+    left: 30%;
+    background: linear-gradient(135deg, var(--nebula-pink), rgba(147, 51, 234, 0.25));
+    border-radius: 50% 60% 50% 40%;
+    animation-delay: -10s;
 }
 
 @keyframes rotate {
@@ -141,6 +171,107 @@ body {
     }
     75% {
         transform: translate(20px, 20px);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        filter: blur(40px) brightness(1);
+        opacity: 0.4;
+    }
+    50% {
+        filter: blur(45px) brightness(1.2);
+        opacity: 0.6;
+    }
+}
+
+/* Spaceships */
+.spaceship {
+    position: absolute;
+    font-size: 2rem;
+    opacity: 0.8;
+    filter: drop-shadow(0 0 10px rgba(147, 51, 234, 0.6));
+    z-index: 5;
+    animation: fly linear infinite;
+    pointer-events: none;
+}
+
+.spaceship1 {
+    top: 15%;
+    left: -50px;
+    animation: fly1 25s linear infinite;
+}
+
+.spaceship2 {
+    top: 40%;
+    left: -50px;
+    animation: fly2 30s linear infinite;
+    animation-delay: -5s;
+}
+
+.spaceship3 {
+    top: 65%;
+    left: -50px;
+    animation: fly3 28s linear infinite;
+    animation-delay: -10s;
+}
+
+.spaceship4 {
+    top: 85%;
+    left: -50px;
+    animation: fly4 32s linear infinite;
+    animation-delay: -15s;
+}
+
+@keyframes fly1 {
+    0% {
+        left: -50px;
+        top: 15%;
+        transform: rotate(-10deg);
+    }
+    100% {
+        left: 110%;
+        top: 10%;
+        transform: rotate(-5deg);
+    }
+}
+
+@keyframes fly2 {
+    0% {
+        left: -50px;
+        top: 40%;
+        transform: rotate(15deg) scale(1.2);
+    }
+    100% {
+        left: 110%;
+        top: 35%;
+        transform: rotate(10deg) scale(1.2);
+    }
+}
+
+@keyframes fly3 {
+    0% {
+        left: -50px;
+        top: 65%;
+        transform: rotate(-15deg);
+    }
+    100% {
+        left: 110%;
+        top: 70%;
+        transform: rotate(-10deg);
+    }
+}
+
+@keyframes fly4 {
+    0% {
+        left: -50px;
+        top: 85%;
+        transform: rotate(5deg) scale(0.9);
+    }
+    100% {
+        left: 110%;
+        top: 80%;
+        transform: rotate(0deg) scale(0.9);
     }
 }
 
@@ -289,9 +420,9 @@ body {
 .container {
     width: 100%;
     max-width: 600px;
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(30px);
-    box-shadow: 0 8px 32px rgba(147, 51, 234, 0.3), 0 0 0 1px rgba(147, 51, 234, 0.2);
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(3px);
+    box-shadow: 0 8px 32px rgba(147, 51, 234, 0.4), 0 0 0 1px rgba(147, 51, 234, 0.3);
     border-radius: 20px;
     padding: 40px;
     margin: 20px;
@@ -341,13 +472,13 @@ body {
 .rsvp-form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5px;
+    margin-bottom: 10px;
 }
 
 .form-group label {
@@ -364,9 +495,9 @@ body {
 .form-group input,
 .form-group textarea {
     padding: 12px 16px;
-    border: 2px solid rgba(147, 51, 234, 0.3);
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
+    border: 2px solid rgba(147, 51, 234, 0.4);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(3px);
     border-radius: 8px;
     font-size: 1rem;
     font-family: inherit;
@@ -396,30 +527,30 @@ body {
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
+    gap: 20px;
 }
 
 /* Photo Upload */
 .photo-upload-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
 }
 
 .photo-preview {
     width: 100%;
     height: 200px;
-    border: 2px dashed rgba(147, 51, 234, 0.4);
+    border: 2px dashed rgba(147, 51, 234, 0.5);
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(3px);
     cursor: pointer;
     transition: all 0.3s ease;
     overflow: hidden;
+    margin-bottom: 10px;
 }
 
 .photo-preview:hover {
@@ -462,8 +593,8 @@ body {
 .photo-btn {
     padding: 10px 16px;
     border: 2px solid rgba(147, 51, 234, 0.5);
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(3px);
     color: rgba(255, 255, 255, 0.95);
     border-radius: 6px;
     font-size: 0.9rem;
@@ -485,7 +616,7 @@ body {
     font-style: italic;
     text-align: left;
     text-shadow: 0 0 10px rgba(147, 51, 234, 0.3);
-    margin: 5px 0 10px 0;
+    margin-bottom: 10px;
 }
 
 /* Captcha Section */
@@ -654,6 +785,7 @@ body {
     transition: all 0.3s ease;
     margin-top: 10px;
     position: relative;
+    width: 100%;
 }
 
 .submit-btn:hover:not(:disabled) {

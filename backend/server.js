@@ -16,7 +16,10 @@ if (process.env.REDIS_URL) {
   redis = new Redis(process.env.REDIS_URL, {
     maxRetriesPerRequest: 3,
     enableReadyCheck: true,
-    connectTimeout: 10000
+    connectTimeout: 10000,
+    tls: {
+      rejectUnauthorized: false // Required for Heroku Redis self-signed certs
+    }
   });
 
   redis.on('error', (err) => {

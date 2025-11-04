@@ -13,14 +13,24 @@ let activeSessions = new Map(); // Fallback for development
 
 if (process.env.REDIS_URL) {
   const Redis = require('ioredis');
-  redis = new Redis(process.env.REDIS_URL, {
+
+  // Heroku Redis uses TLS with self-signed certificates
+  // We need to configure ioredis to accept them
+  const redisConfig = {
     maxRetriesPerRequest: 3,
     enableReadyCheck: true,
     connectTimeout: 10000,
-    tls: {
-      rejectUnauthorized: false // Required for Heroku Redis self-signed certs
-    }
-  });
+    family: 4, // Force IPv4
+    // TLS configuration for Heroku Redis
+    ...(process.env.REDIS_URL.startsWith('rediss://') && {
+      tls: {
+        rejectUnauthorized: false,
+        requestCert: true
+      }
+    })
+  };
+
+  redis = new Redis(process.env.REDIS_URL, redisConfig);
 
   redis.on('error', (err) => {
     console.error('Redis error:', err);

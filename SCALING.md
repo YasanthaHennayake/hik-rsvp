@@ -22,7 +22,20 @@ heroku addons:create rediscloud:30 -a your-app-name
 
 The `REDIS_URL` environment variable will be automatically set by Heroku.
 
-#### 2. Deploy the Updated Code
+#### 2. Enable Sticky Sessions (CRITICAL for multi-dyno)
+
+Sticky sessions ensure that both RSVP requests (init and complete) go to the same dyno:
+
+```bash
+heroku features:enable http-session-affinity -a your-app-name
+```
+
+**Why this is required:**
+- Browser instances are stored in local memory and cannot be shared across dynos
+- Without sticky sessions, the captcha completion request might go to a different dyno
+- This causes "Session data lost" errors
+
+#### 3. Deploy the Updated Code
 
 ```bash
 # Install new dependencies
@@ -34,7 +47,7 @@ git commit -m "Add Redis support and request queuing for scaling"
 git push heroku master
 ```
 
-#### 3. Verify Setup
+#### 4. Verify Setup
 
 Check that Redis is connected:
 
@@ -154,8 +167,10 @@ heroku ps:autoscale:set web --min 2 --max 10 -a your-app-name
 - **Fix**: Increase max dynos or MAX_CONCURRENT_BROWSERS
 
 ### "Session data lost" errors
-- **Cause**: Browser instance lost (dyno restart, crash)
-- **Fix**: This is expected on dyno restarts. User should retry.
+- **Cause #1**: Sticky sessions not enabled - requests routed to different dynos
+- **Fix**: Enable sticky sessions: `heroku features:enable http-session-affinity`
+- **Cause #2**: Browser instance lost (dyno restart, crash, or scaling down)
+- **Fix**: This is expected on dyno restarts/scaling. User should retry.
 
 ### Memory issues
 - **Cause**: Too many concurrent browsers
@@ -163,10 +178,11 @@ heroku ps:autoscale:set web --min 2 --max 10 -a your-app-name
 
 ## Important Notes
 
-1. **Browser instances cannot survive dyno restarts** - Users must start over if a dyno restarts
-2. **Session affinity (sticky sessions) is NOT recommended** - Let Heroku's router balance load naturally
-3. **Redis connection should be monitored** - Application falls back to in-memory if Redis fails
+1. **Sticky sessions are REQUIRED** - Browser instances are stored locally and cannot be shared across dynos
+2. **Browser instances cannot survive dyno restarts** - Users must start over if a dyno restarts or scales down
+3. **Redis connection should be monitored** - Application falls back to in-memory if Redis fails (which breaks multi-dyno)
 4. **Graceful shutdown** is implemented - Browsers are closed cleanly on SIGTERM
+5. **Load balancing still works** - Sticky sessions only ensure same-user requests go to same dyno; different users are balanced across dynos
 
 ## Development vs Production
 

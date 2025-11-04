@@ -289,9 +289,13 @@ app.post('/api/complete-rsvp', async (req, res) => {
     // Get browser/page references from local memory
     const localSession = activeSessions.get(sessionId);
     if (!localSession || !localSession.page || !localSession.browser) {
+      // Clean up the orphaned session in Redis
+      await sessionStorage.delete(sessionId);
+
       return res.status(400).json({
         success: false,
-        error: 'Session data lost. This may happen if the server restarted. Please start over.'
+        error: 'Session expired. This can happen if your request was routed to a different server or if the server restarted. Please start over.',
+        code: 'SESSION_LOST'
       });
     }
 

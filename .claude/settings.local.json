@@ -5,7 +5,8 @@
       "WebSearch",
       "Bash(heroku plugins:install:*)",
       "Bash(heroku config:set:*)",
-      "Bash(heroku ps:*)"
+      "Bash(heroku ps:*)",
+      "Bash(heroku logs:*)"
     ],
     "deny": [],
     "ask": []

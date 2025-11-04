@@ -7,8 +7,88 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Store for active sessions (in production, use Redis or a database)
-const activeSessions = new Map();
+// Redis setup for multi-dyno session storage
+let redis = null;
+let activeSessions = new Map(); // Fallback for development
+
+if (process.env.REDIS_URL) {
+  const Redis = require('ioredis');
+  redis = new Redis(process.env.REDIS_URL, {
+    maxRetriesPerRequest: 3,
+    enableReadyCheck: true,
+    connectTimeout: 10000
+  });
+
+  redis.on('error', (err) => {
+    console.error('Redis error:', err);
+    console.log('Falling back to in-memory sessions');
+    redis = null;
+  });
+
+  redis.on('connect', () => {
+    console.log('✅ Redis connected - multi-dyno sessions enabled');
+  });
+} else {
+  console.log('⚠️  No REDIS_URL - using in-memory sessions (single dyno only)');
+}
+
+// Request queue to prevent resource exhaustion
+const MAX_CONCURRENT_BROWSERS = 3; // Limit concurrent Puppeteer instances
+let activeBrowsers = 0;
+const requestQueue = [];
+
+// Session storage wrapper
+const sessionStorage = {
+  async set(key, value, expirySeconds = 600) {
+    if (redis) {
+      await redis.setex(key, expirySeconds, JSON.stringify(value));
+    } else {
+      activeSessions.set(key, value);
+    }
+  },
+
+  async get(key) {
+    if (redis) {
+      const data = await redis.get(key);
+      return data ? JSON.parse(data) : null;
+    } else {
+      return activeSessions.get(key) || null;
+    }
+  },
+
+  async delete(key) {
+    if (redis) {
+      await redis.del(key);
+    } else {
+      activeSessions.delete(key);
+    }
+  }
+};
+
+// Queue management
+async function processQueue() {
+  if (requestQueue.length > 0 && activeBrowsers < MAX_CONCURRENT_BROWSERS) {
+    const { task, resolve, reject } = requestQueue.shift();
+    activeBrowsers++;
+
+    try {
+      const result = await task();
+      resolve(result);
+    } catch (error) {
+      reject(error);
+    } finally {
+      activeBrowsers--;
+      processQueue(); // Process next in queue
+    }
+  }
+}
+
+function queueTask(task) {
+  return new Promise((resolve, reject) => {
+    requestQueue.push({ task, resolve, reject });
+    processQueue();
+  });
+}
 
 // Middleware
 
@@ -32,7 +112,16 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 
 // API Routes
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Server is running' });
+  res.json({
+    status: 'OK',
+    message: 'Server is running',
+    queue: {
+      active: activeBrowsers,
+      pending: requestQueue.length,
+      maxConcurrent: MAX_CONCURRENT_BROWSERS
+    },
+    redis: redis ? 'connected' : 'not connected'
+  });
 });
 
 // Debug endpoint - Get page screenshot
@@ -98,6 +187,7 @@ app.post('/api/init-rsvp', async (req, res) => {
     const { firstName, lastName, phone, email, organization, photo } = req.body;
 
     console.log('Initializing RSVP for:', firstName, lastName);
+    console.log('Queue status - Active:', activeBrowsers, 'Pending:', requestQueue.length);
 
     // Validate required fields
     if (!firstName || !lastName || !phone || !email || !organization || !photo) {
@@ -107,35 +197,49 @@ app.post('/api/init-rsvp', async (req, res) => {
       });
     }
 
-    // Initialize RSVP and get captcha
-    const result = await initializeRSVP({
-      firstName,
-      lastName,
-      phone,
-      email,
-      organization,
-      photo
+    // Check if queue is too long
+    if (requestQueue.length > 20) {
+      return res.status(503).json({
+        success: false,
+        error: 'Server is too busy. Please try again in a few moments.',
+        queueLength: requestQueue.length
+      });
+    }
+
+    // Queue the browser task to prevent resource exhaustion
+    const result = await queueTask(async () => {
+      return await initializeRSVP({
+        firstName,
+        lastName,
+        phone,
+        email,
+        organization,
+        photo
+      });
     });
 
     // Generate session ID
     const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Store session data
-    activeSessions.set(sessionId, {
+    // Store session data (with browser/page references for cleanup)
+    await sessionStorage.set(sessionId, {
       formData: { firstName, lastName, phone, email, organization },
-      page: result.page,
-      browser: result.browser,
+      browserPid: result.browser._process?.pid, // For monitoring
       timestamp: Date.now()
-    });
+    }, 600); // 10 minute expiry
 
-    // Clean up old sessions (older than 10 minutes)
-    cleanupOldSessions();
+    // Store browser reference separately for cleanup (not in Redis)
+    activeSessions.set(sessionId, {
+      page: result.page,
+      browser: result.browser
+    });
 
     res.json({
       success: true,
       sessionId,
       captchaImage: result.captchaImage,
-      message: 'Please solve the captcha to complete registration'
+      message: 'Please solve the captcha to complete registration',
+      queuePosition: 0
     });
   } catch (error) {
     console.error('RSVP initialization failed:', error);
@@ -160,19 +264,29 @@ app.post('/api/complete-rsvp', async (req, res) => {
       });
     }
 
-    // Get session data
-    const session = activeSessions.get(sessionId);
-    if (!session) {
+    // Check if session exists in Redis/storage
+    const sessionData = await sessionStorage.get(sessionId);
+    if (!sessionData) {
       return res.status(400).json({
         success: false,
         error: 'Session expired or invalid. Please start over.'
       });
     }
 
-    // Complete the RSVP with captcha
-    const result = await completeRSVP(session.page, session.browser, captchaAnswer);
+    // Get browser/page references from local memory
+    const localSession = activeSessions.get(sessionId);
+    if (!localSession || !localSession.page || !localSession.browser) {
+      return res.status(400).json({
+        success: false,
+        error: 'Session data lost. This may happen if the server restarted. Please start over.'
+      });
+    }
 
-    // Clean up session
+    // Complete the RSVP with captcha
+    const result = await completeRSVP(localSession.page, localSession.browser, captchaAnswer);
+
+    // Clean up session from both storage and local memory
+    await sessionStorage.delete(sessionId);
     activeSessions.delete(sessionId);
 
     res.json({
@@ -190,14 +304,15 @@ app.post('/api/complete-rsvp', async (req, res) => {
 
     // Try to clean up session even on error
     if (req.body.sessionId) {
-      const session = activeSessions.get(req.body.sessionId);
-      if (session && session.browser) {
+      const localSession = activeSessions.get(req.body.sessionId);
+      if (localSession && localSession.browser) {
         try {
-          await session.browser.close();
+          await localSession.browser.close();
         } catch (e) {
           console.error('Error closing browser:', e);
         }
       }
+      await sessionStorage.delete(req.body.sessionId);
       activeSessions.delete(req.body.sessionId);
     }
 
@@ -208,24 +323,70 @@ app.post('/api/complete-rsvp', async (req, res) => {
   }
 });
 
-// Cleanup old sessions
-function cleanupOldSessions() {
+// Cleanup old sessions (local browser instances)
+async function cleanupOldSessions() {
+  console.log('Running session cleanup...');
   const now = Date.now();
   const TEN_MINUTES = 10 * 60 * 1000;
 
-  for (const [sessionId, session] of activeSessions.entries()) {
-    if (now - session.timestamp > TEN_MINUTES) {
-      console.log('Cleaning up old session:', sessionId);
-      if (session.browser) {
-        session.browser.close().catch(console.error);
+  for (const [sessionId, localSession] of activeSessions.entries()) {
+    // Check if session still exists in Redis/storage
+    const sessionData = await sessionStorage.get(sessionId);
+
+    if (!sessionData) {
+      // Session expired in Redis, cleanup browser
+      console.log('Cleaning up orphaned browser for session:', sessionId);
+      if (localSession.browser) {
+        try {
+          await localSession.browser.close();
+        } catch (e) {
+          console.error('Error closing browser:', e);
+        }
       }
+      activeSessions.delete(sessionId);
+    } else if (now - sessionData.timestamp > TEN_MINUTES) {
+      // Session too old, cleanup
+      console.log('Cleaning up old session:', sessionId);
+      if (localSession.browser) {
+        try {
+          await localSession.browser.close();
+        } catch (e) {
+          console.error('Error closing browser:', e);
+        }
+      }
+      await sessionStorage.delete(sessionId);
       activeSessions.delete(sessionId);
     }
   }
+
+  console.log('Cleanup complete. Active sessions:', activeSessions.size);
 }
 
-// Run cleanup every 5 minutes
-setInterval(cleanupOldSessions, 5 * 60 * 1000);
+// Run cleanup every 2 minutes
+setInterval(cleanupOldSessions, 2 * 60 * 1000);
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, cleaning up...');
+
+  // Close all active browsers
+  for (const [sessionId, localSession] of activeSessions.entries()) {
+    if (localSession.browser) {
+      try {
+        await localSession.browser.close();
+      } catch (e) {
+        console.error('Error closing browser:', e);
+      }
+    }
+  }
+
+  // Close Redis connection
+  if (redis) {
+    await redis.quit();
+  }
+
+  process.exit(0);
+});
 
 // Serve frontend for all other routes (SPA)
 app.get('*', (req, res) => {

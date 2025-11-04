@@ -7,6 +7,9 @@
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
     "test": "node test-server.js",
+    "load-test": "node load-test.js",
+    "load-test:local": "APP_URL=http://localhost:3000 node load-test.js",
+    "load-test:heavy": "NUM_REQUESTS=10 node load-test.js",
     "install-all": "npm install && cd backend && npm install"
   },
   "engines": {
